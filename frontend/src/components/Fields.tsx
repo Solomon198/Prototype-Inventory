@@ -17,41 +17,31 @@ const Fields = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [selectedMarchantFilter, setSelectedMarchantFilter] =
-    useState<string>("");
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>("");
   const [formData, setFormData] = useState<CreateFieldRequest>({
     name: "",
     type: "",
-    merchantId: "",
     moduleId: "",
   });
 
   useEffect(() => {
     fetchData();
-  }, [selectedMarchantFilter, selectedModuleFilter]);
+  }, [selectedModuleFilter]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [
-        fieldsResponse,
-        dataTypesResponse,
-        marchantsResponse,
-        modulesResponse,
-      ] = await Promise.all([
-        fieldApi.getAll({
-          ...(selectedMarchantFilter && { merchantId: selectedMarchantFilter }),
-          ...(selectedModuleFilter && { moduleId: selectedModuleFilter }),
-        }),
-        dataTypeApi.getAll(),
-        marchantApi.getAll(),
-        moduleApi.getAll(),
-      ]);
+      const [fieldsResponse, dataTypesResponse, modulesResponse] =
+        await Promise.all([
+          fieldApi.getAll({
+            ...(selectedModuleFilter && { moduleId: selectedModuleFilter }),
+          }),
+          dataTypeApi.getAll(),
+          moduleApi.getAll(),
+        ]);
 
       setFields(fieldsResponse);
       setDataTypes(dataTypesResponse);
-      setMarchants(marchantsResponse);
       setModules(modulesResponse);
       setError(null);
     } catch (err) {
@@ -70,7 +60,6 @@ const Fields = () => {
       setFormData({
         name: "",
         type: "",
-        merchantId: "",
         moduleId: "",
       });
       fetchData();
@@ -105,23 +94,6 @@ const Fields = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Fields</h2>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">
-              Filter by Marchant:
-            </label>
-            <select
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={selectedMarchantFilter}
-              onChange={(e) => setSelectedMarchantFilter(e.target.value)}
-            >
-              <option value="">All Marchants</option>
-              {marchants.map((marchant) => (
-                <option key={marchant._id} value={marchant._id}>
-                  {marchant.name}
-                </option>
-              ))}
-            </select>
-          </div>
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">
               Filter by Module:
@@ -166,9 +138,6 @@ const Fields = () => {
                 Data Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Marchant
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Module
               </th>
 
@@ -190,9 +159,6 @@ const Fields = () => {
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {field.type.name}
                   </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {field.merchantId.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {field.moduleId?.name || "-"}

@@ -10,6 +10,7 @@ import type {
   CreateFieldRequest,
   CreateModuleRequest,
 } from "../types";
+import { addMerchantIdToParams } from "../utils/merchantUtils";
 
 const API_BASE_URL = "http://localhost:3000/api";
 
@@ -100,7 +101,9 @@ export const fieldApi = {
     marchantId?: string;
     moduleId?: string;
   }) => {
-    const response = await api.get("/fields", { params });
+    const response = await api.get("/fields", {
+      params: addMerchantIdToParams(params),
+    });
     return response.data;
   },
 
@@ -110,7 +113,9 @@ export const fieldApi = {
   },
 
   create: async (data: CreateFieldRequest) => {
-    const response = await api.post<ApiResponse<Field>>("/fields", data);
+    const merchantId = addMerchantIdToParams().merchantId;
+    const requestData = merchantId ? { ...data, merchantId } : data;
+    const response = await api.post<ApiResponse<Field>>("/fields", requestData);
     return response.data;
   },
 
@@ -142,7 +147,7 @@ export const moduleApi = {
       ...(merchantId && { merchantId }),
     };
     const response = await api.get("/modules", {
-      params: queryParams,
+      params: addMerchantIdToParams(queryParams),
     });
     return response.data;
   },
@@ -153,7 +158,12 @@ export const moduleApi = {
   },
 
   create: async (data: CreateModuleRequest) => {
-    const response = await api.post<ApiResponse<Module>>("/modules", data);
+    const merchantId = addMerchantIdToParams().merchantId;
+    const requestData = merchantId ? { ...data, merchantId } : data;
+    const response = await api.post<ApiResponse<Module>>(
+      "/modules",
+      requestData
+    );
     return response.data;
   },
 

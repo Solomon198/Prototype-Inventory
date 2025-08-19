@@ -11,25 +11,18 @@ const Modules = () => {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<CreateModuleRequest>({
     name: "",
-    merchantId: "",
   });
-  const [selectedMarchantFilter, setSelectedMarchantFilter] =
-    useState<string>("");
 
   useEffect(() => {
     fetchData();
-  }, [selectedMarchantFilter]);
+  }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [modulesResponse, marchantsResponse] = await Promise.all([
-        moduleApi.getAll(selectedMarchantFilter || undefined),
-        marchantApi.getAll(),
-      ]);
+      const modulesResponse = await moduleApi.getAll();
 
       setModules(modulesResponse);
-      setMarchants(marchantsResponse);
       setError(null);
     } catch (err) {
       setError("Failed to fetch data");
@@ -46,7 +39,6 @@ const Modules = () => {
       setShowModal(false);
       setFormData({
         name: "",
-        merchantId: "",
       });
       fetchData();
     } catch (err) {
@@ -79,32 +71,13 @@ const Modules = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Modules</h2>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">
-              Filter by Marchant:
-            </label>
-            <select
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={selectedMarchantFilter}
-              onChange={(e) => setSelectedMarchantFilter(e.target.value)}
-            >
-              <option value="">All Marchants</option>
-              {marchants.map((marchant) => (
-                <option key={marchant._id} value={marchant._id}>
-                  {marchant.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-            onClick={() => setShowModal(true)}
-          >
-            <Plus size={16} />
-            Add Module
-          </button>
-        </div>
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          onClick={() => setShowModal(true)}
+        >
+          <Plus size={16} />
+          Add Module
+        </button>
       </div>
 
       {error && (
@@ -120,9 +93,6 @@ const Modules = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Marchant
-              </th>
 
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Created
@@ -137,9 +107,6 @@ const Modules = () => {
               <tr key={module._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {module.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {module.merchantId.name}
                 </td>
 
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -189,27 +156,6 @@ const Modules = () => {
                   }
                   required
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Marchant
-                </label>
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.merchantId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, merchantId: e.target.value })
-                  }
-                  required
-                >
-                  <option value="">Select Marchant</option>
-                  {marchants.map((marchant) => (
-                    <option key={marchant._id} value={marchant._id}>
-                      {marchant.name}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
