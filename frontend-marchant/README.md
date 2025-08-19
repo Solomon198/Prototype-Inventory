@@ -1,6 +1,6 @@
-# StockFlow - Inventory Management Frontend
+# Inventory Management Frontend
 
-A modern React TypeScript frontend application for the StockFlow Inventory Management Platform, built with Vite and Tailwind CSS.
+A modern React TypeScript frontend application for the Inventory Management System, built with Vite and Tailwind CSS.
 
 ## Features
 
@@ -11,7 +11,7 @@ A modern React TypeScript frontend application for the StockFlow Inventory Manag
 - **Axios** for API communication
 - **Lucide React** for beautiful icons
 - **Modern UI** with clean, professional design
-- **StockFlow Branding** with beautiful gradient design and modern app bar
+- **Authentication System** with login page and protected routes
 
 ## Dashboard Sections
 
@@ -76,10 +76,42 @@ npm run build
 
 The built files will be in the `dist` directory.
 
+## Authentication
+
+The application includes a secure authentication system:
+
+- **Login Page**: Beautiful, responsive login form with name and password fields
+- **Protected Routes**: All dashboard routes are protected and require authentication
+- **Session Management**: Uses localStorage to persist login state
+- **Logout Functionality**: Secure logout with session cleanup
+
+### Login API
+
+The login system sends a POST request to `/api/login` with the following payload:
+
+```json
+{
+  "name": "user_name"
+}
+```
+
+Expected response:
+
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "user": {
+    "name": "user_name"
+  }
+}
+```
+
 ## API Integration
 
 The frontend connects to the backend API at `http://localhost:3000/api` and includes:
 
+- **Authentication API**: `/api/login`
 - **Data Types API**: `/api/data-types`
 - **Marchants API**: `/api/marchants`
 - **Fields API**: `/api/fields`
@@ -90,18 +122,21 @@ The frontend connects to the backend API at `http://localhost:3000/api` and incl
 ```
 src/
 ├── components/
-│   ├── Dashboard.tsx          # Main dashboard with modern app bar
+│   ├── Dashboard.tsx          # Main dashboard layout with logout
+│   ├── Login.tsx              # Authentication login page
+│   ├── ProtectedRoute.tsx     # Route protection component
 │   ├── DataTypes.tsx          # Data types management
 │   ├── Fields.tsx             # Fields management with dropdowns
 │   ├── Marchants.tsx          # Marchants management
 │   └── Modules.tsx            # Modules management with dropdowns
 ├── services/
-│   └── api.ts                 # API service functions
+│   ├── api.ts                 # API configuration
+│   └── authService.ts         # Authentication service
 ├── types/
 │   └── index.ts               # TypeScript type definitions
 ├── lib/
 │   └── utils.ts               # Utility functions
-├── App.tsx                    # Main app component
+├── App.tsx                    # Main app component with routing
 ├── main.tsx                   # App entry point
 └── index.css                  # Global styles with Tailwind
 ```

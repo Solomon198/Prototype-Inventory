@@ -41,6 +41,7 @@ app.use("/api/fields", routes.fieldsRoutes);
 app.use("/api/data-types", routes.dataTypeRoutes);
 app.use("/api/marchants", routes.marchantsRoutes);
 app.use("/api/modules", routes.modulesRoutes);
+app.use("/api/login", routes.loginRoutes);
 
 // Error handling middleware
 app.use(notFoundHandler);

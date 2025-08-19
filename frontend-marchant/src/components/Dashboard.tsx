@@ -1,14 +1,25 @@
 import { useState } from "react";
-import { Database, FileText, Users, Package, BarChart3 } from "lucide-react";
-import DataTypes from "./DataTypes";
-import Fields from "./Fields";
-import Marchants from "./Marchants";
-import Modules from "./Modules";
+import {
+  Database,
+  FileText,
+  Users,
+  Package,
+  LogOut,
+  User,
+  BarChart3,
+  Settings,
+} from "lucide-react";
+import { authService } from "../services/authService";
 
 type ActiveTab = "data-types" | "fields" | "marchants" | "modules";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("data-types");
+
+  const handleLogout = () => {
+    authService.logout();
+    window.location.reload();
+  };
 
   const menuItems = [
     { id: "data-types" as ActiveTab, label: "Data Types", icon: Database },
@@ -17,27 +28,12 @@ const Dashboard = () => {
     { id: "modules" as ActiveTab, label: "Modules", icon: Package },
   ];
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case "data-types":
-        return <DataTypes />;
-      case "fields":
-        return <Fields />;
-      case "marchants":
-        return <Marchants />;
-      case "modules":
-        return <Modules />;
-      default:
-        return <DataTypes />;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Modern App Bar */}
       <header className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 shadow-lg">
         <div className="px-6 py-4">
-          {/* Top Bar with Logo and App Name */}
+          {/* Top Bar with Logo and User Info */}
           <div className="flex justify-between items-center">
             {/* Logo and App Name */}
             <div className="flex items-center gap-3">
@@ -52,6 +48,36 @@ const Dashboard = () => {
                   Inventory Management Platform
                 </p>
               </div>
+            </div>
+
+            {/* User Actions */}
+            <div className="flex items-center gap-4">
+              {/* User Profile */}
+              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-white" />
+                </div>
+                <div className="text-white">
+                  <p className="text-sm font-medium">
+                    {authService.getUserName()}
+                  </p>
+                  <p className="text-xs text-blue-100">Administrator</p>
+                </div>
+              </div>
+
+              {/* Settings Button */}
+              <button className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200">
+                <Settings className="h-5 w-5" />
+              </button>
+
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 border border-white/20 hover:border-white/40"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="text-sm font-medium">Logout</span>
+              </button>
             </div>
           </div>
         </div>
@@ -99,7 +125,27 @@ const Dashboard = () => {
 
           {/* Content Area */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            {renderContent()}
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                {(() => {
+                  const Icon =
+                    menuItems.find((item) => item.id === activeTab)?.icon ||
+                    Database;
+                  return <Icon className="h-8 w-8 text-blue-600" />;
+                })()}
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {menuItems.find((item) => item.id === activeTab)?.label}{" "}
+                Management
+              </h3>
+              <p className="text-gray-600 max-w-md mx-auto">
+                This section allows you to manage your{" "}
+                {menuItems
+                  .find((item) => item.id === activeTab)
+                  ?.label.toLowerCase()}
+                . All your data is organized and easily accessible.
+              </p>
+            </div>
           </div>
         </div>
       </main>
