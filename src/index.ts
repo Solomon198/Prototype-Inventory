@@ -42,6 +42,7 @@ app.use("/api/data-types", routes.dataTypeRoutes);
 app.use("/api/marchants", routes.marchantsRoutes);
 app.use("/api/modules", routes.modulesRoutes);
 app.use("/api/login", routes.loginRoutes);
+app.use("/api/data", routes.moduleDataRoutes);
 
 // Error handling middleware
 app.use(notFoundHandler);

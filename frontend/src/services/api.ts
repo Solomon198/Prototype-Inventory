@@ -9,6 +9,7 @@ import type {
   CreateMarchantRequest,
   CreateFieldRequest,
   CreateModuleRequest,
+  UpdateModuleRequest,
 } from "../types";
 import { addMerchantIdToParams } from "../utils/merchantUtils";
 
@@ -167,7 +168,7 @@ export const moduleApi = {
     return response.data;
   },
 
-  update: async (id: string, data: Partial<CreateModuleRequest>) => {
+  update: async (id: string, data: Partial<UpdateModuleRequest>) => {
     const response = await api.put<ApiResponse<Module>>(`/modules/${id}`, data);
     return response.data;
   },

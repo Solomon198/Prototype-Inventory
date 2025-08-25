@@ -20,14 +20,49 @@ export interface Marchant {
   updatedAt: string;
 }
 
+export interface FieldSchema {
+  name: string;
+  type: string;
+  required?: boolean;
+  defaultValue?: any;
+  validation?: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+    enum?: string[];
+  };
+}
+
 export interface Field {
   _id: string;
   name: string;
   type: DataType;
   merchantId: Marchant;
   moduleId: Module;
+  isLabel?: boolean;
+  typeSchema?: FieldSchema[];
   createdAt: string;
   updatedAt: string;
+}
+
+// Relationship types
+export interface EventRule {
+  action: string;
+  targetField?: string; // Target field in the target module
+  sourceField?: string; // Source field from the current module
+  value?: string; // Optional - only needed for some actions
+  fields?: string[];
+  delta?: string;
+}
+
+export interface Relationship {
+  baseModule: string;
+  targetModule: string;
+  eventRules?: {
+    onCreate?: EventRule[];
+    onUpdate?: EventRule[];
+    onDelete?: EventRule[];
+  };
 }
 
 export interface Module {
@@ -36,6 +71,7 @@ export interface Module {
   description?: string;
   merchantId: Marchant;
   isActive: boolean;
+  relationships?: Relationship[];
   createdAt: string;
   updatedAt: string;
 }
@@ -62,11 +98,17 @@ export interface CreateMarchantRequest {
 export interface CreateFieldRequest {
   name: string;
   type: string;
-  merchantId: string;
   moduleId: string;
+  isLabel?: boolean;
+  typeSchema?: FieldSchema[];
 }
 
 export interface CreateModuleRequest {
   name: string;
-  merchantId: string;
+  relationships?: Relationship[];
+}
+
+export interface UpdateModuleRequest {
+  name?: string;
+  relationships?: Relationship[];
 }

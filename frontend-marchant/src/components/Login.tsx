@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { User, Lock, Eye, EyeOff, Loader2, BarChart3 } from "lucide-react";
 import { authService } from "../services/authService";
+import SplashScreen from "./SplashScreen";
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -45,6 +46,11 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
       setIsSubmitting(false);
     }
   };
+
+  // Show splash screen during login success
+  if (success) {
+    return <SplashScreen message="Logging you in..." />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">

@@ -20,6 +20,7 @@ interface LoginResponse {
 class AuthService {
   private isAuthenticated = false;
   private userName = "";
+  private merchantId = "";
 
   async login(name: string): Promise<LoginResponse> {
     try {
@@ -28,9 +29,11 @@ class AuthService {
       if (response.data.user) {
         this.isAuthenticated = true;
         this.userName = name;
+        this.merchantId = response.data.user.merchantId;
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("userName", name);
         localStorage.setItem("userId", response.data.user._id);
+        localStorage.setItem("merchantId", response.data.user.merchantId);
       }
 
       return {
@@ -49,17 +52,22 @@ class AuthService {
   logout(): void {
     this.isAuthenticated = false;
     this.userName = "";
+    this.merchantId = "";
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("userName");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("merchantId");
   }
 
   checkAuthStatus(): boolean {
     const storedAuth = localStorage.getItem("isAuthenticated");
     const storedName = localStorage.getItem("userName");
+    const storedMerchantId = localStorage.getItem("merchantId");
 
-    if (storedAuth === "true" && storedName) {
+    if (storedAuth === "true" && storedName && storedMerchantId) {
       this.isAuthenticated = true;
       this.userName = storedName;
+      this.merchantId = storedMerchantId;
       return true;
     }
 
@@ -72,6 +80,10 @@ class AuthService {
 
   getUserName(): string {
     return this.userName;
+  }
+
+  getMerchantId(): string {
+    return this.merchantId;
   }
 }
 

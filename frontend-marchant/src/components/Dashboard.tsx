@@ -1,32 +1,58 @@
-import { useState } from "react";
-import {
-  Database,
-  FileText,
-  Users,
-  Package,
-  LogOut,
-  User,
-  BarChart3,
-  Settings,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Package, LogOut, User, BarChart3, Settings, Plus } from "lucide-react";
 import { authService } from "../services/authService";
-
-type ActiveTab = "data-types" | "fields" | "marchants" | "modules";
+import { moduleApi, type Module } from "../services/moduleApi";
+import SplashScreen from "./SplashScreen";
+import DynamicForm from "./DynamicForm";
+import ModuleDataRenderer from "./ModuleDataRenderer";
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("data-types");
+  const [activeTab, setActiveTab] = useState<string>("");
+  const [modules, setModules] = useState<Module[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    fetchModules();
+  }, []);
+
+  const fetchModules = async () => {
+    try {
+      setLoading(true);
+      const merchantId = authService.getMerchantId();
+      if (!merchantId) {
+        setError("No merchant ID found");
+        return;
+      }
+
+      const response = await moduleApi.getAll(merchantId);
+      setModules(response.data || []);
+
+      // Set the first module as active if available
+      if (response.data && response.data.length > 0) {
+        setActiveTab(response.data[0]._id);
+      }
+
+      setError(null);
+    } catch (err) {
+      setError("Failed to fetch modules");
+      console.error("Error fetching modules:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     authService.logout();
     window.location.reload();
   };
 
-  const menuItems = [
-    { id: "data-types" as ActiveTab, label: "Data Types", icon: Database },
-    { id: "fields" as ActiveTab, label: "Fields", icon: FileText },
-    { id: "marchants" as ActiveTab, label: "Marchants", icon: Users },
-    { id: "modules" as ActiveTab, label: "Modules", icon: Package },
-  ];
+  // Show splash screen while loading
+  if (loading) {
+    return <SplashScreen message="Loading your modules..." />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -83,72 +109,119 @@ const Dashboard = () => {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="px-6 pb-0">
-          <div className="flex space-x-1 bg-white/10 backdrop-blur-sm rounded-t-lg p-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
+        {loading ? (
+          <div className="px-6 pb-4">
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              <span className="ml-2 text-white text-sm">
+                Loading modules...
+              </span>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="px-6 pb-4">
+            <div className="bg-red-500/20 backdrop-blur-sm rounded-lg p-3">
+              <p className="text-red-100 text-sm">{error}</p>
+            </div>
+          </div>
+        ) : modules.length > 0 ? (
+          <div className="px-6 pb-0">
+            <div className="flex space-x-1 bg-white/10 backdrop-blur-sm rounded-t-lg p-1">
+              {modules.map((module) => (
                 <button
-                  key={item.id}
+                  key={module._id}
                   className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium ${
-                    activeTab === item.id
+                    activeTab === module._id
                       ? "bg-white text-blue-700 shadow-sm"
                       : "text-white/80 hover:text-white hover:bg-white/10"
                   }`}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => setActiveTab(module._id)}
                 >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
+                  <Package size={18} />
+                  <span>{module.name}</span>
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="px-6 pb-4">
+            <div className="bg-yellow-500/20 backdrop-blur-sm rounded-lg p-3">
+              <p className="text-yellow-100 text-sm">
+                No modules found for this merchant
+              </p>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
       <main className="p-8">
         <div className="max-w-7xl mx-auto">
           {/* Page Header */}
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {menuItems.find((item) => item.id === activeTab)?.label}
-            </h2>
-            <p className="text-gray-600">
-              Manage your{" "}
-              {menuItems
-                .find((item) => item.id === activeTab)
-                ?.label.toLowerCase()}{" "}
-              efficiently
-            </p>
+          <div className="mb-8 flex justify-between items-start">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                {modules.find((module) => module._id === activeTab)?.name ||
+                  "Dashboard"}
+              </h2>
+              <p className="text-gray-600">
+                {modules.find((module) => module._id === activeTab)
+                  ?.description || "Manage your module data efficiently"}
+              </p>
+            </div>
+            {activeTab && (
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <Plus size={16} />
+                Create{" "}
+                {modules.find((module) => module._id === activeTab)?.name}
+              </button>
+            )}
           </div>
 
           {/* Content Area */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                {(() => {
-                  const Icon =
-                    menuItems.find((item) => item.id === activeTab)?.icon ||
-                    Database;
-                  return <Icon className="h-8 w-8 text-blue-600" />;
-                })()}
+            {activeTab && modules.find((module) => module._id === activeTab) ? (
+              <ModuleDataRenderer
+                key={refreshKey}
+                moduleId={activeTab}
+                moduleName={
+                  modules.find((module) => module._id === activeTab)?.name || ""
+                }
+              />
+            ) : (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Package className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  No Module Selected
+                </h3>
+                <p className="text-gray-600 max-w-md mx-auto">
+                  Please select a module from the navigation tabs above to get
+                  started.
+                </p>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                {menuItems.find((item) => item.id === activeTab)?.label}{" "}
-                Management
-              </h3>
-              <p className="text-gray-600 max-w-md mx-auto">
-                This section allows you to manage your{" "}
-                {menuItems
-                  .find((item) => item.id === activeTab)
-                  ?.label.toLowerCase()}
-                . All your data is organized and easily accessible.
-              </p>
-            </div>
+            )}
           </div>
         </div>
       </main>
+
+      {/* Dynamic Form Modal */}
+      {showCreateForm && activeTab && (
+        <DynamicForm
+          moduleId={activeTab}
+          onClose={() => {
+            setShowCreateForm(false);
+            setRefreshKey((prev) => prev + 1); // Refresh the data after form closes
+          }}
+          moduleName={
+            modules.find((module) => module._id === activeTab)?.name || ""
+          }
+        />
+      )}
     </div>
   );
 };

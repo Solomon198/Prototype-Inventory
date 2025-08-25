@@ -1,18 +1,17 @@
 import { useState, useEffect } from "react";
-import { Plus, X, Trash2 } from "lucide-react";
+import { Plus, X, Trash2, PlusCircle, MinusCircle } from "lucide-react";
 import type {
   Field,
   DataType,
-  Marchant,
   Module,
   CreateFieldRequest,
+  FieldSchema,
 } from "../types";
-import { fieldApi, dataTypeApi, marchantApi, moduleApi } from "../services/api";
+import { fieldApi, dataTypeApi, moduleApi } from "../services/api";
 
 const Fields = () => {
   const [fields, setFields] = useState<Field[]>([]);
   const [dataTypes, setDataTypes] = useState<DataType[]>([]);
-  const [marchants, setMarchants] = useState<Marchant[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +21,10 @@ const Fields = () => {
     name: "",
     type: "",
     moduleId: "",
+    isLabel: false,
   });
+  const [showSchemaSection, setShowSchemaSection] = useState(false);
+  const [schemaFields, setSchemaFields] = useState<FieldSchema[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -55,18 +57,57 @@ const Fields = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await fieldApi.create(formData);
+      const submitData = {
+        ...formData,
+        ...(showSchemaSection &&
+          schemaFields.length > 0 && { typeSchema: schemaFields }),
+      };
+      await fieldApi.create(submitData);
       setShowModal(false);
       setFormData({
         name: "",
         type: "",
         moduleId: "",
+        isLabel: false,
       });
+      setSchemaFields([]);
+      setShowSchemaSection(false);
       fetchData();
     } catch (err) {
       setError("Failed to create field");
       console.error("Error creating field:", err);
     }
+  };
+
+  const handleTypeChange = (typeId: string) => {
+    setFormData({ ...formData, type: typeId });
+    const selectedDataType = dataTypes.find((dt) => dt._id === typeId);
+    const isArray = selectedDataType?.name?.toLowerCase() === "array";
+    setShowSchemaSection(!!isArray);
+    if (!isArray) {
+      setSchemaFields([]);
+    }
+  };
+
+  const addSchemaField = () => {
+    setSchemaFields([
+      ...schemaFields,
+      {
+        name: "",
+        type: "",
+        required: false,
+      },
+    ]);
+  };
+
+  const removeSchemaField = (index: number) => {
+    setSchemaFields(schemaFields.filter((_, i) => i !== index));
+  };
+
+  const updateSchemaField = (index: number, field: Partial<FieldSchema>) => {
+    const updatedFields = [...schemaFields];
+    updatedFields[index] = { ...updatedFields[index], ...field };
+    setSchemaFields(updatedFields);
   };
 
   const handleDelete = async (id: string) => {
@@ -138,9 +179,14 @@ const Fields = () => {
                 Data Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Schema
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Module
               </th>
-
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Is Label
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Created
               </th>
@@ -161,9 +207,36 @@ const Fields = () => {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {field.typeSchema && field.typeSchema.length > 0 ? (
+                    <div className="text-xs">
+                      <span className="text-gray-500">Fields: </span>
+                      {field.typeSchema.map((schema, index) => (
+                        <span
+                          key={index}
+                          className="inline-block bg-gray-100 px-1 rounded mr-1"
+                        >
+                          {schema.name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {field.moduleId?.name || "-"}
                 </td>
-
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {field.isLabel ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Yes
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      No
+                    </span>
+                  )}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {new Date(field.createdAt).toLocaleDateString()}
                 </td>
@@ -218,38 +291,24 @@ const Fields = () => {
                 <select
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={formData.type}
-                  onChange={(e) =>
-                    setFormData({ ...formData, type: e.target.value })
-                  }
+                  onChange={(e) => handleTypeChange(e.target.value)}
                   required
                 >
                   <option value="">Select Data Type</option>
-                  {dataTypes.map((dataType) => (
-                    <option key={dataType._id} value={dataType._id}>
-                      {dataType.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Marchant
-                </label>
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.merchantId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, merchantId: e.target.value })
-                  }
-                  required
-                >
-                  <option value="">Select Marchant</option>
-                  {marchants.map((marchant) => (
-                    <option key={marchant._id} value={marchant._id}>
-                      {marchant.name}
-                    </option>
-                  ))}
+                  <optgroup label="Basic Data Types">
+                    {dataTypes.map((dataType) => (
+                      <option key={dataType._id} value={dataType._id}>
+                        {dataType.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Modules">
+                    {modules.map((module) => (
+                      <option key={module._id} value={module._id}>
+                        {module.name}
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
 
@@ -274,11 +333,164 @@ const Fields = () => {
                 </select>
               </div>
 
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="isLabel"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  checked={formData.isLabel}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isLabel: e.target.checked })
+                  }
+                />
+                <div>
+                  <label
+                    htmlFor="isLabel"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Use as Module Label
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    This field will be used as the display name for this module
+                    in lists and relationships
+                  </p>
+                </div>
+              </div>
+
+              {showSchemaSection && (
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-medium text-gray-700">
+                      Array Item Schema
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={addSchemaField}
+                      className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      <PlusCircle size={16} />
+                      Add Field
+                    </button>
+                  </div>
+
+                  {schemaFields.length === 0 && (
+                    <p className="text-sm text-gray-500 mb-4">
+                      Define the structure for each object in the array. Add
+                      fields to specify what properties each array item should
+                      have.
+                    </p>
+                  )}
+
+                  <div className="space-y-3">
+                    {schemaFields.map((schemaField, index) => (
+                      <div
+                        key={index}
+                        className="border border-gray-200 rounded-lg p-3"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-700">
+                            Field {index + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeSchemaField(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <MinusCircle size={16} />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Field Name
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              value={schemaField.name}
+                              onChange={(e) =>
+                                updateSchemaField(index, {
+                                  name: e.target.value,
+                                })
+                              }
+                              placeholder="e.g., title, price"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              Data Type
+                            </label>
+                            <select
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              value={schemaField.type}
+                              onChange={(e) =>
+                                updateSchemaField(index, {
+                                  type: e.target.value,
+                                })
+                              }
+                            >
+                              <option value="">Select Type</option>
+                              <optgroup label="Basic Data Types">
+                                {dataTypes.map((dataType) => (
+                                  <option
+                                    key={dataType._id}
+                                    value={dataType._id}
+                                  >
+                                    {dataType.name}
+                                  </option>
+                                ))}
+                              </optgroup>
+                              <optgroup label="Modules">
+                                {modules.map((module) => (
+                                  <option key={module._id} value={module._id}>
+                                    {module.name}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              checked={schemaField.required || false}
+                              onChange={(e) =>
+                                updateSchemaField(index, {
+                                  required: e.target.checked,
+                                })
+                              }
+                            />
+                            <span className="text-xs text-gray-600">
+                              Required field
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
                   className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setFormData({
+                      name: "",
+                      type: "",
+                      moduleId: "",
+                      isLabel: false,
+                    });
+                    setSchemaFields([]);
+                    setShowSchemaSection(false);
+                  }}
                 >
                   Cancel
                 </button>

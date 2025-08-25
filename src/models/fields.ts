@@ -8,6 +8,9 @@ export interface IFields extends Document {
   type: Schema.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  isLabel: boolean;
+  typeSchema?: Schema.Types.Mixed;
+  value?: Schema.Types.Mixed;
 }
 
 const fieldsSchema = new Schema<IFields>(
@@ -17,6 +20,10 @@ const fieldsSchema = new Schema<IFields>(
       required: [true, "Item name is required"],
       trim: true,
       maxlength: [100, "Item name cannot exceed 100 characters"],
+    },
+    isLabel: {
+      type: Boolean,
+      default: false,
     },
     type: {
       type: Schema.Types.ObjectId,
@@ -38,6 +45,14 @@ const fieldsSchema = new Schema<IFields>(
       required: [true, "Field ID is required"],
       trim: true,
     },
+    value: {
+      type: Schema.Types.Mixed,
+    },
+    typeSchema: [
+      {
+        type: Schema.Types.Mixed,
+      },
+    ],
   },
   {
     timestamps: true,
